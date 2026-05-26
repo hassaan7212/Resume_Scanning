@@ -1,0 +1,455 @@
+{
+  "name": "AI Resume Scanning",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "374e13c8-cab6-4eb1-a115-1f01421729ec",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1HBRFPAwU6hEiAXds9_QHddMkN3ufAD2qkpr0Xfhko10",
+          "mode": "list",
+          "cachedResultName": "Contact Information (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HBRFPAwU6hEiAXds9_QHddMkN3ufAD2qkpr0Xfhko10/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 361636718,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HBRFPAwU6hEiAXds9_QHddMkN3ufAD2qkpr0Xfhko10/edit#gid=361636718"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        0
+      ],
+      "id": "1c2689d6-1184-4d89-87e6-8d36439cb8cd",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2t2JII9Lcv6YT3F3",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2ffbee8c-2465-4428-8f94-9159b5e0e8bc",
+              "leftValue": "={{ $json.Processed }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "8eadb5e7-3006-4df5-b53f-8fe215dbd221",
+      "name": "check status"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{$json.CV.split('id=')[1]}}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        624,
+        -96
+      ],
+      "id": "b3773859-a3c5-4fbd-b029-1a5e8cb184e4",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "7ebBHRfocL5J64f8",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "You are an AI resume parser.\n\nTask:\nScan the uploaded CV/resume and identify all programming, scripting, database, and coding-related languages mentioned anywhere in the document.\n\nRules:\n- Count only unique coding/programming languages.\n- Include languages mentioned under skills, projects, experience, certifications, tools, technologies, expertise, or descriptions like \"worked on\", \"expert in\", \"familiar with\", etc.\n- Examples include: Python, Java, JavaScript, C++, C#, PHP, Ruby, Go, Rust, TypeScript, SQL, Kotlin, Swift, R, MATLAB, Scala, Bash, Perl, HTML, CSS, etc.\n- Ignore frameworks, libraries, tools, platforms, databases, and software unless they are actual programming/query/markup languages.\n- Do not explain anything.\n- Do not return JSON.\n- Output only a single number.\n\nExample outputs:\n0\n2\n7\n12",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        832,
+        -96
+      ],
+      "id": "cc3c8e91-9160-404e-88fd-ec7c5139085f",
+      "name": "Analyze an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XY9SYumbwFGThqZS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "-5231371621",
+        "text": "={{ $('Get row(s) in sheet').item.json.Name }}\nis shortlisted and he/she has skill of \n{{ $('Analyze an image').item.json.content.parts[0].text }}\nlanguages",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1552,
+        -224
+      ],
+      "id": "d19848ac-3904-4f25-8847-e78aa2c4b818",
+      "name": "Send a text message",
+      "webhookId": "9b07b546-b7c1-4036-8e2b-4f1e4cd4ec3a",
+      "credentials": {
+        "telegramApi": {
+          "id": "qvY3QltAUFPGeBAj",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "hassaanirshad7423@gmail.com",
+        "toEmail": "={{ $('Get row(s) in sheet').item.json.Email }}",
+        "subject": "WELCOME",
+        "emailFormat": "text",
+        "text": "Welcome to our system . you are short listed . Soon you will be informed about the allocation",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1552,
+        240
+      ],
+      "id": "1b188895-5438-438f-a3dd-a46a59784017",
+      "name": "Send an Email",
+      "webhookId": "2496d916-5e8a-4192-88ed-7f8a1a87bc28",
+      "credentials": {
+        "smtp": {
+          "id": "RtL8uUtQCr80r8E2",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1HBRFPAwU6hEiAXds9_QHddMkN3ufAD2qkpr0Xfhko10",
+          "mode": "list",
+          "cachedResultName": "Contact Information (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HBRFPAwU6hEiAXds9_QHddMkN3ufAD2qkpr0Xfhko10/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 361636718,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HBRFPAwU6hEiAXds9_QHddMkN3ufAD2qkpr0Xfhko10/edit#gid=361636718"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Processed": "Yes",
+            "Short_Listed": "={{ $('Analyze an image').item.json.content.parts[0].text }}",
+            "Timestamp": "={{ $('Get row(s) in sheet').item.json.Timestamp }}",
+            "Name": "={{ $('Get row(s) in sheet').item.json.Name }}",
+            "Email": "={{ $('Get row(s) in sheet').item.json.Email }}",
+            "CV": "={{ $('Get row(s) in sheet').item.json.CV }}"
+          },
+          "matchingColumns": [
+            "Timestamp"
+          ],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "CV",
+              "displayName": "CV",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Processed",
+              "displayName": "Processed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Short_Listed",
+              "displayName": "Short_Listed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1024,
+        64
+      ],
+      "id": "7e059110-6aad-488f-a5b3-91dfad412a57",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2t2JII9Lcv6YT3F3",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "51bf10e5-5609-4edb-a007-fd101681faee",
+              "leftValue": "={{ Number($json.Short_Listed) }}",
+              "rightValue": 2,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1232,
+        -64
+      ],
+      "id": "507164d0-9889-424e-ba9e-7606d4651d79",
+      "name": "If"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "check status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check status": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze an image": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        []
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an Email": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "075ec6df-2e3c-488a-a199-1b48b89e4c11",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f78a79f60f306cea494eeccad661d779fbc91ad0cfd2415c427534ec6d1449b4"
+  },
+  "id": "BXOJuJQNcCYaJRjD",
+  "tags": []
+}
