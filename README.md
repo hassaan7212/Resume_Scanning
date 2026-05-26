@@ -1,2 +1,2 @@
 # Resume_Scanning
-Resume / CV is getting scan from AI and counting the programming languages from resume .
+AI-powered resume screening workflow using n8n, Gemini AI, Google Sheets, and Telegram.
